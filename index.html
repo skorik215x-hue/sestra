@@ -155,8 +155,21 @@
     </div>
   </div>
 
+  <div style="display:flex;align-items:center;justify-content:space-between;background:var(--card);border-radius:14px;padding:14px 16px;margin-bottom:12px;border:1px solid rgba(20,189,189,0.15)">
+    <div>
+      <div style="font-size:14px;font-weight:600">Авто-структурирование</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px">Сохраняет сразу после диктовки</div>
+    </div>
+    <label style="position:relative;display:inline-block;width:50px;height:28px;cursor:pointer">
+      <input type="checkbox" id="autoToggle" style="opacity:0;width:0;height:0" onchange="onAutoToggle()">
+      <span id="autoSlider" style="position:absolute;inset:0;background:rgba(255,255,255,0.15);border-radius:28px;transition:0.2s">
+        <span style="position:absolute;left:3px;top:3px;width:22px;height:22px;background:white;border-radius:50%;transition:0.2s;display:block" id="autoKnob"></span>
+      </span>
+    </label>
+  </div>
+
   <div style="margin-top:4px">
-    <button class="btn btn-primary" onclick="parseText()">✨ Структурировать</button>
+    <button class="btn btn-primary" onclick="parseAndSave()">✨ Структурировать и сохранить</button>
     <button class="btn btn-secondary" onclick="clearAll()">Очистить</button>
   </div>
 
@@ -217,6 +230,8 @@ let patients = JSON.parse(localStorage.getItem('sestra_patients') || '[]');
 let recognition = null;
 let isRecording = false;
 let accumulatedText = '';
+let autoMode = false;
+let autoTimer = null;
 
 // ===== TABS =====
 function switchTab(tab) {
@@ -319,9 +334,31 @@ function updateTranscriptBox(text) {
 function onManualInput(val) {
   currentText = val;
   accumulatedText = val;
-  const box = document.getElementById('transcriptBox');
-  box.textContent = val || 'Здесь появится текст...';
-  box.classList.toggle('empty', !val);
+  if (autoMode && val.trim()) {
+    clearTimeout(autoTimer);
+    autoTimer = setTimeout(() => { parseAndSave(); }, 1800);
+  }
+}
+
+function onAutoToggle() {
+  autoMode = document.getElementById('autoToggle').checked;
+  const slider = document.getElementById('autoSlider');
+  const knob = document.getElementById('autoKnob');
+  if (autoMode) {
+    slider.style.background = 'var(--teal)';
+    knob.style.transform = 'translateX(22px)';
+    showToast('Авто-режим включён');
+  } else {
+    slider.style.background = 'rgba(255,255,255,0.15)';
+    knob.style.transform = 'translateX(0)';
+  }
+}
+
+function parseAndSave() {
+  parseText();
+  if (parsedData) {
+    setTimeout(() => saveToDb(autoMode), 200);
+  }
 }
 
 function clearAll() {
@@ -461,13 +498,13 @@ function renderParsedCard(d) {
 }
 
 // ===== DATABASE =====
-function saveToDb() {
+function saveToDb(silent) {
   if (!parsedData) return;
   patients.unshift({...parsedData});
   localStorage.setItem('sestra_patients', JSON.stringify(patients));
-  showToast('✓ Сохранено в базу');
+  showToast('✓ Сохранено: ' + (parsedData.name || 'пациент'));
   clearAll();
-  setTimeout(() => switchTab('db'), 800);
+  if (!silent) setTimeout(() => switchTab('db'), 800);
 }
 
 function renderDb() {
