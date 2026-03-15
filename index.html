@@ -230,82 +230,64 @@ function toggleRecording() {
 
 function startRecording() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) {
-    showToast('Голос недоступен — введите текст вручную');
-    return;
-  }
+  if (!SR) { showToast('Голос недоступен — введите текст вручную'); return; }
+
+  recognition = new SR();
+  recognition.lang = 'ru-RU';
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
 
   isRecording = true;
   setRecordingUI();
-  launchSession();
-}
-
-function launchSession() {
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  recognition = new SR();
-  recognition.lang = 'ru-RU';
-  recognition.continuous = false;   // надёжнее на всех браузерах
-  recognition.interimResults = true;
-  recognition.maxAlternatives = 1;
-
-  let sessionFinal = '';
 
   recognition.onresult = (e) => {
-    let interim = '';
-    for (let i = e.resultIndex; i < e.results.length; i++) {
-      if (e.results[i].isFinal) {
-        sessionFinal += e.results[i][0].transcript + ' ';
-      } else {
-        interim += e.results[i][0].transcript;
-      }
+    let text = '';
+    for (let i = 0; i < e.results.length; i++) {
+      text += e.results[i][0].transcript + ' ';
     }
-    currentText = (accumulatedText + sessionFinal + interim).trim();
+    accumulatedText += text;
+    currentText = accumulatedText.trim();
     updateTranscriptBox(currentText);
   };
 
   recognition.onend = () => {
-    accumulatedText = (accumulatedText + sessionFinal).trim();
-    if (accumulatedText) accumulatedText += ' ';
     recognition = null;
-
-    if (isRecording) {
-      // Пользователь ещё записывает — перезапускаем сессию
-      setTimeout(launchSession, 100);
+    isRecording = false;
+    // iOS сам останавливает после паузы — показываем что можно говорить ещё
+    if (currentText) {
+      document.getElementById('micBtn').className = 'mic-btn idle';
+      document.getElementById('micIcon').textContent = '🎙';
+      document.getElementById('micLabel').textContent = '✓ Записано. Нажмите ещё раз чтобы добавить';
+      document.getElementById('micLabel').className = 'mic-label';
     } else {
-      // Пользователь нажал стоп
-      currentText = accumulatedText.trim();
-      updateTranscriptBox(currentText);
-      if (currentText) {
-        document.getElementById('micLabel').textContent = 'Обработка...';
-        setTimeout(parseText, 300);
-      }
+      setIdleUI();
     }
   };
 
   recognition.onerror = (e) => {
     recognition = null;
+    isRecording = false;
     if (e.error === 'not-allowed') {
-      isRecording = false;
       setIdleUI();
-      showToast('Нет доступа к микрофону — проверьте разрешения');
+      showToast('Нет доступа к микрофону — Настройки → Safari → Микрофон');
       return;
     }
-    if (e.error === 'no-speech') {
-      if (isRecording) setTimeout(launchSession, 200);
-      return;
-    }
+    if (e.error === 'no-speech') { setIdleUI(); return; }
     if (e.error !== 'aborted') showToast('Ошибка: ' + e.error);
-    if (isRecording) setTimeout(launchSession, 300);
+    setIdleUI();
   };
 
-  recognition.start();
+  try { recognition.start(); } catch(e) {
+    showToast('Не удалось запустить микрофон');
+    isRecording = false;
+    setIdleUI();
+  }
 }
 
 function stopRecording() {
   isRecording = false;
-  if (recognition) {
-    try { recognition.stop(); } catch(e) {}
-  }
+  if (recognition) { try { recognition.abort(); } catch(e) {} recognition = null; }
   setIdleUI();
 }
 
