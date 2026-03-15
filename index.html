@@ -136,23 +136,27 @@
 <!-- RECORD SCREEN -->
 <div class="screen active" id="screen-record">
 
-  <div class="mic-area">
-    <button class="mic-btn idle" id="micBtn" onclick="toggleRecording()">
-      <span class="mic-icon" id="micIcon">🎙</span>
-    </button>
-    <div class="mic-label" id="micLabel">Нажмите, чтобы надиктовать</div>
+  <div style="margin-bottom:14px">
+    <div style="font-size:13px;color:var(--muted);margin-bottom:10px;text-align:center;letter-spacing:0.3px">
+      Нажмите на поле → откроется клавиатура → нажмите 🎤 на клавиатуре и говорите
+    </div>
+    <textarea class="text-input" id="manualInput"
+      placeholder="Иванов, палата 5, температура 37.2, давление 130 на 80, пульс 76, поставила укол цефтриаксона, диагноз пневмония"
+      oninput="onManualInput(this.value)"
+      rows="5"
+      style="font-size:16px;min-height:130px"></textarea>
   </div>
 
-  <div id="transcriptBox" class="transcript-box empty">Здесь появится текст...</div>
+  <div style="background:var(--card);border-radius:14px;padding:14px 16px;margin-bottom:16px;border:1px solid rgba(20,189,189,0.15);display:flex;align-items:center;gap:12px">
+    <span style="font-size:28px">🎤</span>
+    <div>
+      <div style="font-size:13px;font-weight:600;color:var(--text)">Как диктовать на iPhone</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:2px;line-height:1.5">Тап в поле → на клавиатуре справа внизу нажать <strong style="color:var(--teal-light)">🎤</strong> → говорить</div>
+    </div>
+  </div>
 
-  <p style="text-align:center;font-size:12px;color:var(--muted);margin:-8px 0 14px;">или введите вручную</p>
-
-  <textarea class="text-input" id="manualInput"
-    placeholder="Напр.: Иванов, палата 4, температура 37.2, давление 130 на 80, пульс 76, поставила укол цефтриаксона 1г, диагноз пневмония"
-    oninput="onManualInput(this.value)"></textarea>
-
-  <div style="margin-top:16px">
-    <button class="btn btn-primary" onclick="parseText()">✨ Распознать и структурировать</button>
+  <div style="margin-top:4px">
+    <button class="btn btn-primary" onclick="parseText()">✨ Структурировать</button>
     <button class="btn btn-secondary" onclick="clearAll()">Очистить</button>
   </div>
 
