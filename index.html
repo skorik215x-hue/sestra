@@ -232,6 +232,7 @@ let isRecording = false;
 let accumulatedText = '';
 let autoMode = false;
 let autoTimer = null;
+let isSaving = false;
 
 // ===== TABS =====
 function switchTab(tab) {
@@ -353,9 +354,11 @@ function onAutoToggle() {
 }
 
 function parseAndSave() {
+  if (isSaving) return;
   parseText();
   if (parsedData) {
-    setTimeout(() => saveToDb(autoMode), 200);
+    isSaving = true;
+    setTimeout(() => { saveToDb(autoMode); isSaving = false; }, 200);
   }
 }
 
