@@ -325,10 +325,8 @@ function setIdleUI() {
 }
 
 function updateTranscriptBox(text) {
-  const box = document.getElementById('transcriptBox');
-  box.textContent = text || 'Здесь появится текст...';
-  box.classList.toggle('empty', !text);
   document.getElementById('manualInput').value = text;
+  currentText = text;
 }
 
 function onManualInput(val) {
@@ -363,12 +361,10 @@ function parseAndSave() {
 
 function clearAll() {
   currentText = '';
-  document.getElementById('transcriptBox').textContent = 'Здесь появится текст...';
-  document.getElementById('transcriptBox').classList.add('empty');
+  accumulatedText = '';
+  parsedData = null;
   document.getElementById('manualInput').value = '';
   document.getElementById('parsedCard').classList.remove('visible');
-  parsedData = null;
-  accumulatedText = '';
 }
 
 // ===== PARSER =====
