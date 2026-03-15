@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>СЕСТРА</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="СЕСТРА">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0F1923">
+<link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22%D0%A1%D0%95%D0%A1%D0%A2%D0%A0%D0%90%22%2C%22short_name%22%3A%22%D0%A1%D0%95%D0%A1%D0%A2%D0%A0%D0%90%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230F1923%22%2C%22theme_color%22%3A%22%230F1923%22%2C%22start_url%22%3A%22.%22%7D">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%230F1923'/%3E%3Ctext x='90' y='115' font-size='90' text-anchor='middle' fill='%2314BDBD'%3E%F0%9F%A9%BA%3C/text%3E%3C/svg%3E">
+<style>
+  :root {
+    --teal: #0D7377;
+    --teal-light: #14BDBD;
+    --dark: #0F1923;
+    --card: #1A2535;
+    --coral: #E84545;
+    --gold: #F2A900;
+    --text: #E8EEF4;
+    --muted: rgba(255,255,255,0.45);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+  body { background: var(--dark); color: var(--text); font-family: -apple-system, 'Segoe UI', sans-serif; min-height: 100vh; overflow-x: hidden; }
+
+  /* HEADER */
+  .header { background: var(--card); padding: 16px 20px 12px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(20,189,189,0.2); position: sticky; top: 0; z-index: 100; }
+  .logo { font-size: 22px; font-weight: 900; letter-spacing: 2px; color: var(--teal-light); }
+  .logo span { color: white; }
+  .header-sub { font-size: 11px; color: var(--muted); letter-spacing: 1px; }
+
+  /* TABS */
+  .tabs { display: flex; background: var(--card); border-bottom: 1px solid rgba(255,255,255,0.07); }
+  .tab { flex: 1; padding: 14px; text-align: center; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; letter-spacing: 0.5px; }
+  .tab.active { color: var(--teal-light); border-bottom-color: var(--teal-light); }
+
+  /* RECORD SCREEN */
+  .screen { display: none; padding: 20px; }
+  .screen.active { display: block; }
+
+  .mic-area { text-align: center; padding: 32px 0 24px; }
+  .mic-btn { width: 110px; height: 110px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; margin: 0 auto; transition: all 0.2s; position: relative; }
+  .mic-btn.idle { background: var(--teal); box-shadow: 0 0 0 0 rgba(20,189,189,0.4); }
+  .mic-btn.recording { background: var(--coral); animation: pulse 1.2s infinite; }
+  .mic-btn.recording::after { content:''; position:absolute; inset:-8px; border-radius:50%; border:2px solid var(--coral); opacity:0.5; animation: ring 1.2s infinite; }
+  @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(232,69,69,0.5)} 50%{box-shadow:0 0 0 20px rgba(232,69,69,0)} }
+  @keyframes ring { 0%{transform:scale(1);opacity:0.5} 100%{transform:scale(1.4);opacity:0} }
+  .mic-icon { font-size: 42px; }
+  .mic-label { margin-top: 14px; font-size: 13px; color: var(--muted); letter-spacing: 0.5px; }
+  .mic-label.recording { color: var(--coral); }
+
+  .transcript-box { background: var(--card); border-radius: 14px; padding: 16px; min-height: 90px; font-size: 15px; line-height: 1.65; color: var(--text); border: 1px solid rgba(20,189,189,0.15); margin-bottom: 16px; white-space: pre-wrap; }
+  .transcript-box.empty { color: var(--muted); font-size: 14px; }
+
+  .text-input { width: 100%; background: var(--card); border: 1px solid rgba(20,189,189,0.2); border-radius: 14px; padding: 14px; color: var(--text); font-size: 15px; line-height: 1.6; resize: vertical; min-height: 90px; outline: none; }
+  .text-input::placeholder { color: var(--muted); }
+  .text-input:focus { border-color: var(--teal-light); }
+
+  .btn { width: 100%; padding: 16px; border-radius: 14px; border: none; font-size: 16px; font-weight: 700; cursor: pointer; letter-spacing: 0.5px; transition: all 0.15s; }
+  .btn-primary { background: var(--teal); color: white; }
+  .btn-primary:active { background: #0A5E62; transform: scale(0.98); }
+  .btn-secondary { background: rgba(255,255,255,0.07); color: var(--muted); margin-top: 10px; font-size: 14px; }
+  .btn-secondary:active { background: rgba(255,255,255,0.12); }
+
+  /* PARSED CARD PREVIEW */
+  .parsed-card { background: var(--card); border-radius: 16px; padding: 20px; margin: 20px 0; border: 1px solid rgba(20,189,189,0.25); display: none; }
+  .parsed-card.visible { display: block; }
+  .parsed-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; }
+  .parsed-name { font-size: 20px; font-weight: 700; }
+  .parsed-ward { background: var(--teal); color: white; font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 20px; letter-spacing: 0.5px; white-space: nowrap; margin-left: 8px; margin-top: 3px; }
+  .vitals-row { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .vital { background: rgba(20,189,189,0.1); border-radius: 10px; padding: 10px 14px; flex: 1; min-width: 80px; text-align: center; }
+  .vital-value { font-size: 18px; font-weight: 700; color: var(--teal-light); }
+  .vital-label { font-size: 10px; color: var(--muted); margin-top: 3px; letter-spacing: 0.5px; text-transform: uppercase; }
+  .field-row { margin-bottom: 12px; }
+  .field-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 4px; }
+  .field-value { font-size: 14px; color: var(--text); line-height: 1.5; }
+  .tag { display: inline-block; background: rgba(242,169,0,0.15); color: var(--gold); font-size: 12px; padding: 4px 10px; border-radius: 20px; margin: 2px; }
+  .save-btn { width: 100%; padding: 14px; border-radius: 12px; border: none; background: var(--teal-light); color: var(--dark); font-size: 15px; font-weight: 800; cursor: pointer; letter-spacing: 0.5px; margin-top: 4px; }
+  .save-btn:active { transform: scale(0.97); }
+
+  /* DATABASE SCREEN */
+  .db-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .db-title { font-size: 16px; font-weight: 700; }
+  .db-count { background: var(--teal); color: white; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 20px; }
+  .patient-card { background: var(--card); border-radius: 16px; padding: 18px; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.06); cursor: pointer; transition: border-color 0.2s; }
+  .patient-card:active { border-color: var(--teal-light); }
+  .pc-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+  .pc-name { font-size: 17px; font-weight: 700; }
+  .pc-time { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .pc-vitals { display: flex; gap: 8px; flex-wrap: wrap; }
+  .pc-vital { display: flex; align-items: center; gap: 5px; font-size: 13px; }
+  .pc-vital-icon { font-size: 14px; }
+  .pc-vital-val { color: var(--teal-light); font-weight: 600; }
+  .pc-vital-unit { color: var(--muted); font-size: 11px; }
+  .pc-procedures { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 5px; }
+  .pc-proc { background: rgba(20,189,189,0.1); color: var(--teal-light); font-size: 11px; padding: 3px 9px; border-radius: 20px; }
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .empty-icon { font-size: 52px; margin-bottom: 16px; }
+  .empty-text { font-size: 15px; line-height: 1.7; }
+
+  /* MODAL */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; align-items: flex-end; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--card); border-radius: 24px 24px 0 0; padding: 24px 20px 40px; width: 100%; max-height: 85vh; overflow-y: auto; }
+  .modal-handle { width: 40px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; margin: 0 auto 20px; }
+  .modal-close { float: right; background: rgba(255,255,255,0.1); border: none; color: var(--text); font-size: 18px; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; }
+  .modal-name { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+  .modal-ward { font-size: 13px; color: var(--teal-light); margin-bottom: 20px; }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--teal); color: white; padding: 12px 24px; border-radius: 30px; font-size: 14px; font-weight: 600; display: none; z-index: 300; white-space: nowrap; }
+  .toast.show { display: block; animation: toastIn 0.3s ease; }
+  @keyframes toastIn { from{opacity:0;transform:translate(-50%,20px)} to{opacity:1;transform:translate(-50%,0)} }
+
+  .divider { height: 1px; background: rgba(255,255,255,0.07); margin: 14px 0; }
+  .section-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 6px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="logo">СЕС<span>ТРА</span></div>
+    <div class="header-sub">УМНЫЙ ПОМОЩНИК МЕДСЕСТРЫ · ДЕМО</div>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('record')">🎙 Записать</div>
+  <div class="tab" onclick="switchTab('db')">📋 База пациентов</div>
+</div>
+
+<!-- RECORD SCREEN -->
+<div class="screen active" id="screen-record">
+
+  <div class="mic-area">
+    <button class="mic-btn idle" id="micBtn" onclick="toggleRecording()">
+      <span class="mic-icon" id="micIcon">🎙</span>
+    </button>
+    <div class="mic-label" id="micLabel">Нажмите, чтобы надиктовать</div>
+  </div>
+
+  <div id="transcriptBox" class="transcript-box empty">Здесь появится текст...</div>
+
+  <p style="text-align:center;font-size:12px;color:var(--muted);margin:-8px 0 14px;">или введите вручную</p>
+
+  <textarea class="text-input" id="manualInput"
+    placeholder="Напр.: Иванов, палата 4, температура 37.2, давление 130 на 80, пульс 76, поставила укол цефтриаксона 1г, диагноз пневмония"
+    oninput="onManualInput(this.value)"></textarea>
+
+  <div style="margin-top:16px">
+    <button class="btn btn-primary" onclick="parseText()">✨ Распознать и структурировать</button>
+    <button class="btn btn-secondary" onclick="clearAll()">Очистить</button>
+  </div>
+
+  <!-- PARSED RESULT -->
+  <div class="parsed-card" id="parsedCard">
+    <div class="parsed-header">
+      <div class="parsed-name" id="res-name">—</div>
+      <div class="parsed-ward" id="res-ward">Палата —</div>
+    </div>
+
+    <div class="vitals-row" id="vitalsRow"></div>
+
+    <div id="res-procedures-wrap" class="field-row" style="display:none">
+      <div class="field-label">Процедуры / манипуляции</div>
+      <div id="res-procedures" class="field-value"></div>
+    </div>
+
+    <div id="res-diagnosis-wrap" class="field-row" style="display:none">
+      <div class="field-label">Диагноз</div>
+      <div id="res-diagnosis" class="field-value"></div>
+    </div>
+
+    <div id="res-notes-wrap" class="field-row" style="display:none">
+      <div class="field-label">Заметки</div>
+      <div id="res-notes" class="field-value" style="color:var(--muted);font-size:13px"></div>
+    </div>
+
+    <div class="divider"></div>
+    <button class="save-btn" onclick="saveToDb()">💾 Сохранить в базу</button>
+  </div>
+</div>
+
+<!-- DB SCREEN -->
+<div class="screen" id="screen-db">
+  <div class="db-header">
+    <div class="db-title">Пациенты</div>
+    <div class="db-count" id="dbCount">0</div>
+  </div>
+  <div id="patientsList"></div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" id="modalContent">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeModalDirect()">✕</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== STATE =====
+let currentText = '';
+let parsedData = null;
+let patients = JSON.parse(localStorage.getItem('sestra_patients') || '[]');
+let recognition = null;
+let isRecording = false;
+let accumulatedText = '';
+
+// ===== TABS =====
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', (i===0 && tab==='record') || (i===1 && tab==='db')));
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + tab).classList.add('active');
+  if (tab === 'db') renderDb();
+}
+
+// ===== SPEECH RECOGNITION =====
+function toggleRecording() {
+  if (!isRecording) startRecording();
+  else stopRecording();
+}
+
+function startRecording() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    showToast('Голос недоступен — введите текст вручную');
+    return;
+  }
+
+  isRecording = true;
+  setRecordingUI();
+  launchSession();
+}
+
+function launchSession() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.lang = 'ru-RU';
+  recognition.continuous = false;   // надёжнее на всех браузерах
+  recognition.interimResults = true;
+  recognition.maxAlternatives = 1;
+
+  let sessionFinal = '';
+
+  recognition.onresult = (e) => {
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) {
+        sessionFinal += e.results[i][0].transcript + ' ';
+      } else {
+        interim += e.results[i][0].transcript;
+      }
+    }
+    currentText = (accumulatedText + sessionFinal + interim).trim();
+    updateTranscriptBox(currentText);
+  };
+
+  recognition.onend = () => {
+    accumulatedText = (accumulatedText + sessionFinal).trim();
+    if (accumulatedText) accumulatedText += ' ';
+    recognition = null;
+
+    if (isRecording) {
+      // Пользователь ещё записывает — перезапускаем сессию
+      setTimeout(launchSession, 100);
+    } else {
+      // Пользователь нажал стоп
+      currentText = accumulatedText.trim();
+      updateTranscriptBox(currentText);
+      if (currentText) {
+        document.getElementById('micLabel').textContent = 'Обработка...';
+        setTimeout(parseText, 300);
+      }
+    }
+  };
+
+  recognition.onerror = (e) => {
+    recognition = null;
+    if (e.error === 'not-allowed') {
+      isRecording = false;
+      setIdleUI();
+      showToast('Нет доступа к микрофону — проверьте разрешения');
+      return;
+    }
+    if (e.error === 'no-speech') {
+      if (isRecording) setTimeout(launchSession, 200);
+      return;
+    }
+    if (e.error !== 'aborted') showToast('Ошибка: ' + e.error);
+    if (isRecording) setTimeout(launchSession, 300);
+  };
+
+  recognition.start();
+}
+
+function stopRecording() {
+  isRecording = false;
+  if (recognition) {
+    try { recognition.stop(); } catch(e) {}
+  }
+  setIdleUI();
+}
+
+function setRecordingUI() {
+  document.getElementById('micBtn').className = 'mic-btn recording';
+  document.getElementById('micIcon').textContent = '⏹';
+  document.getElementById('micLabel').textContent = 'Говорите... нажмите для остановки';
+  document.getElementById('micLabel').className = 'mic-label recording';
+}
+
+function setIdleUI() {
+  document.getElementById('micBtn').className = 'mic-btn idle';
+  document.getElementById('micIcon').textContent = '🎙';
+  document.getElementById('micLabel').textContent = 'Нажмите, чтобы надиктовать';
+  document.getElementById('micLabel').className = 'mic-label';
+}
+
+function updateTranscriptBox(text) {
+  const box = document.getElementById('transcriptBox');
+  box.textContent = text || 'Здесь появится текст...';
+  box.classList.toggle('empty', !text);
+  document.getElementById('manualInput').value = text;
+}
+
+function onManualInput(val) {
+  currentText = val;
+  accumulatedText = val;
+  const box = document.getElementById('transcriptBox');
+  box.textContent = val || 'Здесь появится текст...';
+  box.classList.toggle('empty', !val);
+}
+
+function clearAll() {
+  currentText = '';
+  document.getElementById('transcriptBox').textContent = 'Здесь появится текст...';
+  document.getElementById('transcriptBox').classList.add('empty');
+  document.getElementById('manualInput').value = '';
+  document.getElementById('parsedCard').classList.remove('visible');
+  parsedData = null;
+  accumulatedText = '';
+}
+
+// ===== PARSER =====
+function parseText() {
+  const text = currentText || document.getElementById('manualInput').value;
+  if (!text.trim()) { showToast('Сначала надиктуйте или введите текст'); return; }
+
+  const d = {};
+
+  // Ward
+  const wardM = text.match(/палат[аеу]\s+(\d+)|(\d+)[- ]?я?\s*палат/i);
+  d.ward = wardM ? (wardM[1] || wardM[2]) : null;
+
+  // Temperature
+  const tempM = text.match(/температур[ауы]?\s*[:\-]?\s*(\d+[.,]\d*|\d+)|[тТ]\s+(\d+[.,]\d+)/i);
+  d.temp = tempM ? (tempM[1] || tempM[2]).replace(',','.') : null;
+
+  // Pressure
+  const pressM = text.match(/давлени[еяю]\s+(\d+)\s+на\s+(\d+)|[АаAa][ДдDd]\s*[:\-]?\s*(\d+)[\/\\](\d+)/i);
+  d.pressure = pressM ? (pressM[1] ? pressM[1]+'/'+pressM[2] : pressM[3]+'/'+pressM[4]) : null;
+
+  // Pulse
+  const pulseM = text.match(/пульс\s*[:\-]?\s*(\d+)/i);
+  d.pulse = pulseM ? pulseM[1] : null;
+
+  // Saturation
+  const satM = text.match(/[сСsS]атураци[яю]\s*[:\-]?\s*(\d+)|[оО]2\s*(\d+)|[сС]пО2\s*(\d+)/i);
+  d.sat = satM ? (satM[1]||satM[2]||satM[3]) : null;
+
+  // Name — first capitalized Cyrillic word sequence
+  // Try to find the name by common patterns: "[Surname] [Name]" at the beginning, or "пациент[ка] X"
+  const namePatterns = [
+    /пациент(?:ка)?\s+([А-ЯЁ][а-яё]+(?:\s+[А-ЯЁ][а-яё]+)?)/i,
+    /^([А-ЯЁ][а-яё]+(?:\s+[А-ЯЁ][а-яё]+)?)/,
+    /([А-ЯЁ][а-яё]+(?:\s+[А-ЯЁ][а-яё]+)?)\s*[,,]/
+  ];
+  for (const pat of namePatterns) {
+    const m = text.match(pat);
+    if (m) { d.name = m[1].trim(); break; }
+  }
+  if (!d.name) {
+    // fallback: first capitalized word
+    const words = text.split(/[\s,]+/);
+    const cap = words.find(w => /^[А-ЯЁ][а-яё]{2,}/.test(w) && !/^(Палата|Температура|Давление|Пульс|Диагноз|Поставила|Провела)/i.test(w));
+    if (cap) d.name = cap;
+  }
+
+  // Procedures
+  const procs = [];
+  const procPatterns = [
+    { re: /(?:сделала?|поставила?|ввела?)\s+укол\s+([а-яёА-ЯЁ0-9\s]+?)(?:\s+\d+\s*(?:мг|мл|г)|[,.]|$)/i, label: 'Инъекция' },
+    { re: /(?:поставила?|сделала?|ввела?)\s+инъекци[юя]\s+([а-яёА-ЯЁ0-9\s]+?)(?:\s+\d+\s*(?:мг|мл|г)|[,.]|$)/i, label: 'Инъекция' },
+    { re: /инъекци[яю]\s+([а-яёА-ЯЁ0-9\s]+?)(?:\s+\d+\s*(?:мг|мл|г)|[,.]|$)/i, label: 'Инъекция' },
+    { re: /(?:укол|инъекци[яю])\s+([а-яёА-ЯЁ0-9]+)/i, label: 'Инъекция' },
+  ];
+  let foundInj = false;
+  for (const {re, label} of procPatterns) {
+    const m = text.match(re);
+    if (m && !foundInj) { procs.push(label + ': ' + m[1].trim()); foundInj = true; break; }
+  }
+  if (!foundInj && /укол|инъекци[яю]/i.test(text)) procs.push('Инъекция');
+
+  if (/капельниц[ауе]/i.test(text)) {
+    const m = text.match(/капельниц[ауе]\s+(?:с\s+)?([а-яёА-ЯЁ0-9\s]+?)(?:[,.]|$)/i);
+    procs.push(m ? 'Капельница: ' + m[1].trim() : 'Капельница');
+  }
+  if (/перевязк[аиу]/i.test(text)) procs.push('Перевязка');
+  if (/таблетк[иу]|принял[аи]?\s+таблетк/i.test(text)) {
+    const m = text.match(/таблетк[ию]\s+([а-яёА-ЯЁa-zA-Z]+)/i);
+    procs.push(m ? 'Таблетки: ' + m[1] : 'Таблетки');
+  }
+  if (/анализ|кровь\s+на|мочу\s+сдал/i.test(text)) procs.push('Забор анализов');
+  if (/ЭКГ|электрокардио/i.test(text)) procs.push('ЭКГ');
+  if (/клизм/i.test(text)) procs.push('Клизма');
+  if (/промывани[ея]/i.test(text)) procs.push('Промывание');
+  d.procedures = procs;
+
+  // Diagnosis
+  const diagM = text.match(/диагноз[:\s]+([^,\.]+)/i);
+  d.diagnosis = diagM ? diagM[1].trim() : null;
+
+  // Remaining text = notes
+  d.rawText = text;
+  d.timestamp = new Date().toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
+  d.date = new Date().toLocaleDateString('ru-RU', {day:'2-digit', month:'2-digit'});
+  d.id = Date.now();
+
+  parsedData = d;
+  renderParsedCard(d);
+}
+
+function renderParsedCard(d) {
+  document.getElementById('res-name').textContent = d.name || 'Пациент';
+  document.getElementById('res-ward').textContent = d.ward ? 'Палата ' + d.ward : '—';
+
+  // Vitals
+  const vitals = [];
+  if (d.temp) vitals.push({val: d.temp + '°', label: 'Темп.'});
+  if (d.pressure) vitals.push({val: d.pressure, label: 'АД'});
+  if (d.pulse) vitals.push({val: d.pulse, label: 'Пульс'});
+  if (d.sat) vitals.push({val: d.sat + '%', label: 'SpO2'});
+  const vr = document.getElementById('vitalsRow');
+  vr.innerHTML = vitals.map(v => `<div class="vital"><div class="vital-value">${v.val}</div><div class="vital-label">${v.label}</div></div>`).join('');
+
+  // Procedures
+  if (d.procedures.length) {
+    document.getElementById('res-procedures-wrap').style.display = 'block';
+    document.getElementById('res-procedures').innerHTML = d.procedures.map(p => `<span class="tag">✓ ${p}</span>`).join('');
+  } else {
+    document.getElementById('res-procedures-wrap').style.display = 'none';
+  }
+
+  // Diagnosis
+  if (d.diagnosis) {
+    document.getElementById('res-diagnosis-wrap').style.display = 'block';
+    document.getElementById('res-diagnosis').textContent = d.diagnosis;
+  } else {
+    document.getElementById('res-diagnosis-wrap').style.display = 'none';
+  }
+
+  // Notes
+  document.getElementById('res-notes-wrap').style.display = 'block';
+  document.getElementById('res-notes').textContent = d.rawText;
+
+  document.getElementById('parsedCard').classList.add('visible');
+  document.getElementById('parsedCard').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+// ===== DATABASE =====
+function saveToDb() {
+  if (!parsedData) return;
+  patients.unshift({...parsedData});
+  localStorage.setItem('sestra_patients', JSON.stringify(patients));
+  showToast('✓ Сохранено в базу');
+  clearAll();
+  setTimeout(() => switchTab('db'), 800);
+}
+
+function renderDb() {
+  const list = document.getElementById('patientsList');
+  document.getElementById('dbCount').textContent = patients.length;
+
+  if (!patients.length) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">База пуста.<br>Надиктуйте первого пациента<br>на вкладке «Записать».</div></div>`;
+    return;
+  }
+
+  list.innerHTML = patients.map((p,i) => `
+    <div class="patient-card" onclick="openModal(${i})">
+      <div class="pc-top">
+        <div>
+          <div class="pc-name">${p.name || 'Пациент'}</div>
+          <div class="pc-time">${p.date} · ${p.timestamp}${p.ward ? ' · Палата ' + p.ward : ''}</div>
+        </div>
+      </div>
+      <div class="pc-vitals">
+        ${p.temp ? `<div class="pc-vital"><span class="pc-vital-icon">🌡️</span><span class="pc-vital-val">${p.temp}</span><span class="pc-vital-unit">°C</span></div>` : ''}
+        ${p.pressure ? `<div class="pc-vital"><span class="pc-vital-icon">💉</span><span class="pc-vital-val">${p.pressure}</span><span class="pc-vital-unit">мм.рт</span></div>` : ''}
+        ${p.pulse ? `<div class="pc-vital"><span class="pc-vital-icon">❤️</span><span class="pc-vital-val">${p.pulse}</span><span class="pc-vital-unit">уд/мин</span></div>` : ''}
+        ${p.sat ? `<div class="pc-vital"><span class="pc-vital-icon">🫁</span><span class="pc-vital-val">${p.sat}</span><span class="pc-vital-unit">%</span></div>` : ''}
+      </div>
+      ${p.procedures.length ? `<div class="pc-procedures">${p.procedures.map(pr => `<span class="pc-proc">${pr}</span>`).join('')}</div>` : ''}
+      ${p.diagnosis ? `<div style="margin-top:10px;font-size:13px;color:var(--muted)">Диагноз: <span style="color:var(--text)">${p.diagnosis}</span></div>` : ''}
+    </div>
+  `).join('');
+}
+
+function openModal(idx) {
+  const p = patients[idx];
+  document.getElementById('modalBody').innerHTML = `
+    <div class="modal-name">${p.name || 'Пациент'}</div>
+    <div class="modal-ward">${p.ward ? 'Палата ' + p.ward + ' · ' : ''}${p.date} ${p.timestamp}</div>
+    <div class="vitals-row">
+      ${p.temp ? `<div class="vital"><div class="vital-value">${p.temp}°</div><div class="vital-label">Темп.</div></div>` : ''}
+      ${p.pressure ? `<div class="vital"><div class="vital-value">${p.pressure}</div><div class="vital-label">АД</div></div>` : ''}
+      ${p.pulse ? `<div class="vital"><div class="vital-value">${p.pulse}</div><div class="vital-label">Пульс</div></div>` : ''}
+      ${p.sat ? `<div class="vital"><div class="vital-value">${p.sat}%</div><div class="vital-label">SpO2</div></div>` : ''}
+    </div>
+    ${p.procedures.length ? `<div class="field-row"><div class="section-label">Процедуры</div><div>${p.procedures.map(pr => `<span class="tag">✓ ${pr}</span>`).join('')}</div></div>` : ''}
+    ${p.diagnosis ? `<div class="field-row" style="margin-top:12px"><div class="section-label">Диагноз</div><div style="font-size:15px">${p.diagnosis}</div></div>` : ''}
+    <div class="divider"></div>
+    <div class="section-label">Исходная запись</div>
+    <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-top:4px">${p.rawText}</div>
+    <div class="divider"></div>
+    <button onclick="deletePatient(${idx})" style="width:100%;padding:12px;border-radius:12px;border:none;background:rgba(232,69,69,0.15);color:var(--coral);font-size:14px;font-weight:600;cursor:pointer;margin-top:4px">Удалить запись</button>
+  `;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function deletePatient(idx) {
+  patients.splice(idx, 1);
+  localStorage.setItem('sestra_patients', JSON.stringify(patients));
+  closeModalDirect();
+  renderDb();
+  showToast('Запись удалена');
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModalDirect();
+}
+function closeModalDirect() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+// ===== TOAST =====
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// Init
+renderDb();
+</script>
+</body>
+</html>
